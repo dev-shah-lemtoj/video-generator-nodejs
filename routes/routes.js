@@ -792,6 +792,13 @@ module.exports = function (route) {
             folder: 'Base UI'
         });
     })
+    route.get('/preview', (req, res) => {
+    res.render('preview',{ // Render the preview.ejs file
+        title: 'preview',
+        page_title: 'preview',
+        folder: 'Pages'
+        });
+    })
     route.get('/drag-drop', (req, res) => {
         const icons = {
     slider: "sliders",

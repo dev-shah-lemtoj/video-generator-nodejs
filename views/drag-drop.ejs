@@ -109,6 +109,15 @@
 <%- contentFor('FooterJs') %>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
+function previewCanvas() {
+  // Hide all edit buttons
+  document.querySelectorAll('.hide-edit-button').forEach(btn => {
+    btn.style.display = 'none'; // Hide the edit buttons
+  });
+  const canvasContent = document.getElementById('drop-canvas').innerHTML; // Get the current canvas content
+  localStorage.setItem('canvasContent', canvasContent); // Save it to local storage
+  window.location.href = '/preview'; // Redirect to the preview page
+}
  function showCanvasAlert(message) {
   const alertBox = document.getElementById('canvasAlertBox');
   const alertId = `alert-${Date.now()}`;
@@ -187,7 +196,6 @@ function addLayoutToCanvas(columns = 1, target = dropCanvas) {
 
     // Add drop placeholder (initially hidden)
     col.innerHTML = `
-    <div class="text-muted text-center">Column ${i + 1}</div>
       <div class="drop-placeholder text-center text-muted py-5" style="border: 2px dashed #ccc; display: none;">
         <i data-lucide="plus-circle" class="mb-2"></i><br/>
         Drop here
@@ -307,7 +315,7 @@ function addLayoutToCanvas(columns = 1, target = dropCanvas) {
     contentWrapper.innerHTML = editableContent;
 
     const editBtn = document.createElement('button');
-    editBtn.className = "btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 d-flex align-items-center";
+    editBtn.className = "btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 d-flex align-items-center hide-edit-button";
     editBtn.innerHTML = `<i data-lucide="pencil"></i>`;
 
 
@@ -518,6 +526,7 @@ sourceSelect.addEventListener('change', () => {
 
     element.appendChild(contentWrapper);
     element.appendChild(editBtn);
+        lucide.createIcons();
     // dropCanvas.appendChild(element);
       targetContainer.appendChild(element);
       dropTarget.classList.add('has-component');

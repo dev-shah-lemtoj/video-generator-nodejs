@@ -1,0 +1,31 @@
+<% var title = "Drag & Drop Canvas"; %>
+<%- contentFor('HeaderCss') %>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .canvas-preview {
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+    </style>
+<%- contentFor('body') %>
+    <div class="container">
+        <h1 class="text-center">Canvas Preview</h1>
+        <div id="canvasPreview" class="canvas-preview"></div>
+        <div class="text-center mt-4">
+            <button class="btn btn-primary" onclick="window.history.back()">Go Back</button>
+        </div>
+    </div>
+<%- contentFor('FooterJs') %>
+    <script>
+        // Retrieve the canvas content from local storage
+        const canvasContent = localStorage.getItem('canvasContent');
+        document.getElementById('canvasPreview').innerHTML = canvasContent || '<p>No content available.</p>';
+
+        document.querySelectorAll('.hide-edit-button').forEach(btn => {
+        // btn.style.display = 'none'; // Hide the edit buttons
+        // Alternatively, you can remove them completely:
+        btn.remove();
+    });
+    </script>
+
