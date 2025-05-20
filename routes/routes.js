@@ -822,6 +822,13 @@ module.exports = function (route) {
         folder: 'Pages'
     });
     });
+     route.get('/site-config', (req, res, next) => {
+        res.render('site-config', {
+            title: 'Site Config',
+            page_title: 'Site Config',
+            folder: 'Page'
+        });
+    })
     route.get('/ui-badges', (req, res, next) => {
         res.render('ui-badges', {
             title: 'Badges',

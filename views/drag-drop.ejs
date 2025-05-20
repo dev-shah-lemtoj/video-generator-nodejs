@@ -574,7 +574,7 @@ function extractPlaylistId(url) {
 async function generateGridByCategory(cols, rows, query, videoCount) {
   currentVideoQuery = query;
   currentCols = cols;
-  currentVideoCount = cols * rows;
+  currentVideoCount = (cols * rows)*6;
   currentVideoSourceType = 'category';
 
   const { videos, nextPageToken: token } = await fetchVideosByCategory(query, currentVideoCount);
@@ -595,22 +595,40 @@ async function generateGridByCategory(cols, rows, query, videoCount) {
   return html;
 }
 
-async function fetchVideosByCategory(query, maxResults=12, pageToken = '') {
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=${maxResults}&q=${encodeURIComponent(query)}&type=video&order=date&pageToken=${pageToken}&key=${YT_API_KEY}`;
-  const res = await fetch(url);
+async function fetchVideosByCategory(query, maxResults = 72, page = 1) {
+  const url = `https://api.jwplayer.com/v2/sites/rxoMwaA5/thumbnails/?page=${page}&page_length=${maxResults}&sort=created%3Adsc`;
+
+  const res = await fetch(url, {
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': 'T-tVXvNw5HquxLSS5A_G_2InU2xwbU5XcEpTMEV3ZUVweVJYaEhTRmRuZFVSQ1NXSncn'
+    }
+  });
+
   const data = await res.json();
 
-  if (!data.items) return { videos: [], nextPageToken: null };
+  // Grouping like in PHP
+  const grouped = {};
+  for (const item of data.thumbnails) {
+    const mediaId = item.relationships?.media?.[0]?.id;
+    const type = item.file_type;
+    const url = item.delivery_url;
 
-  const videos = data.items.map(item => ({
-    snippet: {
-      resourceId: { videoId: item.id.videoId },
-      ...item.snippet
-    }
-  }));
+    if (!mediaId) continue;
+    if (!grouped[mediaId]) grouped[mediaId] = { mediaId };
+    grouped[mediaId][type] = url;
+  }
 
-  return { videos, nextPageToken: data.nextPageToken || null };
+  const videos = Object.values(grouped);
+  const hasMore = data.page < data.total_pages;
+
+  return {
+    videos,
+    nextPageToken: hasMore ? page + 1 : null
+  };
 }
+
+
 
 
 function renderVideosGrid(videos, cols, rows, videoCount, wrap = true) {
@@ -621,16 +639,14 @@ function renderVideosGrid(videos, cols, rows, videoCount, wrap = true) {
     html += `<div class="row mb-3">`;
     for (let c = 0; c < cols && index < videos.length; c++, index++) {
       const video = videos[index];
-      const { title, thumbnails } = video.snippet;
-      const videoId = video.snippet.resourceId?.videoId || video.id?.videoId || '';
       html += `
         <div class="col">
           <div class="card h-100">
-            <img src="${thumbnails.medium.url}" class="card-img-top" alt="${title}">
-            <div class="card-body p-2">
+            <video controls class="card-img-top" preload="metadata">
+  <source src="${video.mp4}" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
-              <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" class="btn btn-sm btn-outline-primary w-100">Watch</a>
-            </div>
           </div>
         </div>`;
     }
@@ -640,6 +656,17 @@ function renderVideosGrid(videos, cols, rows, videoCount, wrap = true) {
   if (wrap) html += `</div>`;
   return html;
 }
+
+function playJWVideo(containerId, fileUrl, imageUrl) {
+  // You can either reuse the same div or dynamically create a modal/player container
+  jwplayer(containerId).setup({
+    file: fileUrl,
+    image: imageUrl,
+    title: 'Sample Video'
+  });
+}
+
+
 
 
 async function loadMoreVideos() {
