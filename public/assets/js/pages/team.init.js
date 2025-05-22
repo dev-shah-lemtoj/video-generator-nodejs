@@ -42,7 +42,7 @@ var url="assets/json/";
 var allmemberlist = '';
 
 // Reading JSON with Fetch API
-fetch("http://localhost:5000/api/users")
+fetch("http://103.154.233.39:5000/api/users")
     .then(res => res.json())
     .then((data) => {
         allmemberlist = data;
@@ -62,7 +62,7 @@ function loadTeamData(datas) {
         '<div class="col">\
             <div class="card team-box">\
                 <div class="team-cover">\
-                    <img src="'+teamData.coverImg+'" alt="" class="img-fluid" />\
+                    <img src="/assets/images/small/img-9.jpg" alt="" class="img-fluid" />\
                 </div>\
                 <div class="card-body p-4">\
                     <div class="row align-items-center team-row">\
@@ -70,9 +70,6 @@ function loadTeamData(datas) {
                             <div class="row">\
                                 <div class="col">\
                                     <div class="flex-shrink-0 me-2">\
-                                        <button type="button" class="btn btn-light btn-icon rounded-circle btn-sm favourite-btn ' + checkBookmark + '">\
-                                            <i class="ri-star-fill fs-14"></i>\
-                                        </button>\
                                     </div>\
                                 </div>\
                                 <div class="col text-end dropdown">\
@@ -88,7 +85,7 @@ function loadTeamData(datas) {
                         </div>\
                         <div class="col-lg-4 col">\
                             <div class="team-profile-img">\
-                                <div class="avatar-lg img-thumbnail rounded-circle flex-shrink-0"></div>\
+                                <img src="/assets/images/users/user-dummy-img.jpg" alt="" class="avatar-lg img-thumbnail rounded-circle mx-auto profile-img">\
                                 <div class="team-content">\
                                     <a class="member-name" data-bs-toggle="offcanvas" href="#member-overview" aria-controls="member-overview">\
                                         <h5 class="fs-16 mb-1">'+teamData.name+'</h5>\
@@ -108,9 +105,6 @@ function loadTeamData(datas) {
                             </div>\
                         </div>\
                         <div class="col-lg-2 col">\
-                            <div class="text-end">\
-                                <a href="pages-profile.html" class="btn btn-light view-btn">View Profile</a>\
-                            </div>\
                         </div>\
                     </div>\
                 </div>\
@@ -141,17 +135,17 @@ bookmarkBtn();
 var editlist = false;
 
 // member image
-document.querySelector("#member-image-input").addEventListener("change", function () {
-    var preview = document.querySelector("#member-img");
-    var file = document.querySelector("#member-image-input").files[0];
-    var reader = new FileReader();
-    reader.addEventListener("load",function () {
-        preview.src = reader.result;
-    },false);
-    if (file) {
-        reader.readAsDataURL(file);
-    }
-});
+// document.querySelector("#member-image-input").addEventListener("change", function () {
+//     var preview = document.querySelector("#member-img");
+//     var file = document.querySelector("#member-image-input").files[0];
+//     var reader = new FileReader();
+//     reader.addEventListener("load",function () {
+//         preview.src = reader.result;
+//     },false);
+//     if (file) {
+//         reader.readAsDataURL(file);
+//     }
+// });
 
 function editMemberList() {
     var getEditid = 0;
@@ -186,22 +180,22 @@ function editMemberList() {
 
 
 // cover image
-document.querySelector("#cover-image-input").addEventListener("change", function () {
-    var preview = document.querySelector("#cover-img");
-    var file = document.querySelector("#cover-image-input").files[0];
-    var reader = new FileReader();
-    reader.addEventListener("load",function () {
-        preview.src = reader.result;
-    },false);
-    if (file) {
-        reader.readAsDataURL(file);
-    }
-});
+// document.querySelector("#cover-image-input").addEventListener("change", function () {
+//     var preview = document.querySelector("#cover-img");
+//     var file = document.querySelector("#cover-image-input").files[0];
+//     var reader = new FileReader();
+//     reader.addEventListener("load",function () {
+//         preview.src = reader.result;
+//     },false);
+//     if (file) {
+//         reader.readAsDataURL(file);
+//     }
+// });
 
 Array.from(document.querySelectorAll(".addMembers-modal")).forEach(function (elem) {
     elem.addEventListener('click', function (event) {
-      document.getElementById("createMemberLabel").innerHTML = "Add New Members";
-      document.getElementById("addNewMember").innerHTML = "Add Member";
+      document.getElementById("createMemberLabel").innerHTML = "Add New User";
+      document.getElementById("addNewMember").innerHTML = "Add User";
       document.getElementById("name").value = "";
       document.getElementById("email").value = "";
       document.getElementById("password").value = "";

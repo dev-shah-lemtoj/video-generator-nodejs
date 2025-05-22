@@ -42,7 +42,7 @@ var url="assets/json/";
 var allmemberlist = '';
 
 // Reading JSON with Fetch API
-fetch()
+fetch("http://03.154.233.39:5000/api/users")
     .then(res => res.json())
     .then((data) => {
         allmemberlist = data;
@@ -53,7 +53,7 @@ fetch()
 function loadTeamData(datas) {
     document.querySelector("#team-member-list").innerHTML = '';
 
-    Array.from(datas).forEach(function (teamData, index) {
+    datas.forEach(function (teamData, index) {
         var checkBookmark = teamData.bookmark ? "active" : "";
         var isUserProfile = teamData.memberImg ? '<img src="'+teamData.memberImg+'" alt="" class="member-img img-fluid d-block rounded-circle" />'
                     : '<div class="avatar-title border bg-light text-primary rounded-circle text-uppercase">' + teamData.nickname + '</div>';
@@ -88,24 +88,22 @@ function loadTeamData(datas) {
                         </div>\
                         <div class="col-lg-4 col">\
                             <div class="team-profile-img">\
-                                <div class="avatar-lg img-thumbnail rounded-circle flex-shrink-0">'+isUserProfile+'</div>\
+                                <div class="avatar-lg img-thumbnail rounded-circle flex-shrink-0"></div>\
                                 <div class="team-content">\
                                     <a class="member-name" data-bs-toggle="offcanvas" href="#member-overview" aria-controls="member-overview">\
-                                        <h5 class="fs-16 mb-1">'+teamData.memberName+'</h5>\
+                                        <h5 class="fs-16 mb-1">'+teamData.name+'</h5>\
                                     </a>\
-                                    <p class="text-muted member-designation mb-0">'+teamData.position+'</p>\
+                                    <p class="text-muted member-designation mb-0"></p>\
                                 </div>\
                             </div>\
                         </div>\
                         <div class="col-lg-4 col">\
                             <div class="row text-muted text-center">\
                                 <div class="col-6 border-end border-end-dashed">\
-                                    <h5 class="mb-1 projects-num">'+teamData.projects+'</h5>\
-                                    <p class="text-muted mb-0">Projects</p>\
+                                    <h5 class="mb-1 projects-num"></h5>\
                                 </div>\
                                 <div class="col-6">\
-                                    <h5 class="mb-1 tasks-num">'+teamData.tasks+'</h5>\
-                                    <p class="text-muted mb-0">Tasks</p>\
+                                    <h5 class="mb-1 tasks-num"></h5>\
                                 </div>\
                             </div>\
                         </div>\
@@ -204,8 +202,9 @@ Array.from(document.querySelectorAll(".addMembers-modal")).forEach(function (ele
     elem.addEventListener('click', function (event) {
       document.getElementById("createMemberLabel").innerHTML = "Add New Members";
       document.getElementById("addNewMember").innerHTML = "Add Member";
-      document.getElementById("teammembersName").value = "";
-      document.getElementById("designation").value = "";
+      document.getElementById("name").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("password").value = "";
 
       document.getElementById("cover-img").src = "assets/images/small/img-9.jpg";
       document.getElementById("member-img").src = "assets/images/users/user-dummy-img.jpg";

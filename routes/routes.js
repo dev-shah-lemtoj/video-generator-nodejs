@@ -686,13 +686,15 @@ module.exports = function (route) {
         });
     })
 
-    route.get('/pages-team', (req, res, next) => {
+    route.get('/users', (req, res, next) => {
         res.render('pages-team', {
-            title: 'Team',
-            page_title: 'Team',
-            folder: 'Pages'
+            title: 'Users',
+            page_title: 'Users',
+            folder: 'Pages',
+             baseUrl: process.env.BASE_URL 
         });
     })
+    
     route.get('/pages-timeline', (req, res, next) => {
         res.render('pages-timeline', {
             title: 'Timeline',

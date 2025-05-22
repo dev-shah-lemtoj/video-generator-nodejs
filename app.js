@@ -55,5 +55,10 @@ app.all("*", function (req, res) {
 });
 
 
+app.use((req, res, next) => {
+  res.locals.baseUrl = process.env.BASE_URL;
+  next();
+});
+
 const http = require("http").createServer(app);
-http.listen(process.env.PORT, () => console.log(`Server running on port ${process.env.PORT}`));
+http.listen(process.env.PORT,'0.0.0.0', () => console.log(`Server running on port ${process.env.PORT}`));

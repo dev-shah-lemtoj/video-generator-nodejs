@@ -16,7 +16,7 @@ const validate = async (req, res) => {
     var userEmail = req.body.email;
     var userPassword = req.body.password;
 
-      if (userEmail === "admin@gmail.com" && userPassword === "admin") {
+      if (userEmail === "webncoders@gmail.com" && userPassword === "webncoders") {
         // Set session for admin
         req.session.userid = "admin";
         req.session.username = "Admin";
