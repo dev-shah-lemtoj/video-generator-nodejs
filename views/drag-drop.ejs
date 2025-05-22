@@ -3,6 +3,10 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+
 <style>
   .layout-box {
   height: 20px;
@@ -111,6 +115,8 @@
 <%- contentFor('FooterJs') %>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
+ // Add drag-and-drop functionality for reordering components
+  
 function previewCanvas() {
   // Hide all edit buttons
   document.querySelectorAll('.hide-edit-button').forEach(btn => {
@@ -155,6 +161,8 @@ function previewCanvas() {
 
   const dropCanvas = document.getElementById('drop-canvas');
   const components = document.querySelectorAll('.draggable-component');
+  
+  
   let currentEditTarget = null;
   let currentComponentType = null;
 
@@ -185,6 +193,14 @@ function handleDrop(e) {
 }
 }
 
+function moveComponent(component, direction) {
+    const parent = component.parentElement;
+    if (direction === 'up' && component.previousElementSibling) {
+        parent.insertBefore(component, component.previousElementSibling);
+    } else if (direction === 'down' && component.nextElementSibling) {
+        parent.insertBefore(component.nextElementSibling, component);
+    }
+}
 
 
 function addLayoutToCanvas(columns = 1, target = dropCanvas) {
@@ -222,13 +238,50 @@ function addLayoutToCanvas(columns = 1, target = dropCanvas) {
       const type = e.dataTransfer.getData('text/plain');
       if (type) {
         addComponentToCanvas(type, col);
+        
       }
     });
 
-    row.appendChild(col);
-  }
+    const deleteBtn = document.createElement('button');
+deleteBtn.className = 'btn btn-danger btn-sm mt-2';
+deleteBtn.innerHTML = `<i data-lucide="trash-2"></i>`;
+deleteBtn.style.margin = "15px";
 
+deleteBtn.onclick = () => {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete it!',
+    cancelButtonText: 'Cancel',
+    customClass: {
+      confirmButton: 'btn btn-primary w-xs me-2',
+      cancelButton: 'btn btn-light w-xs',
+    },
+    buttonsStyling: false
+  }).then((result) => {
+    if (result.isConfirmed) {
+      row.remove();
+      Swal.fire({
+        title: 'Deleted!',
+        text: 'Your layout has been deleted.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
+  });
+};
+
+col.appendChild(deleteBtn);
+row.appendChild(col);
+lucide.createIcons();
+
+  }
+  
   target.appendChild(row);
+  lucide.createIcons();
 }
 
   function addLayout(cols) {
@@ -254,6 +307,7 @@ function addLayoutToCanvas(columns = 1, target = dropCanvas) {
 
     const contentWrapper = document.createElement('div');
     contentWrapper.className = "component-content";
+    contentWrapper.style.margin = "32px";
 
     let editableContent = "";
 
@@ -261,7 +315,7 @@ function addLayoutToCanvas(columns = 1, target = dropCanvas) {
       case "slider":
         const id = `carousel-${Date.now()}`;
         editableContent = `
-          <div id="${id}" class="carousel slide" data-bs-ride="carousel" style="max-width: 600px;">
+          <div id="${id}" class="carousel slide" data-bs-ride="carousel" style="max-width: auto;">
             <div class="carousel-inner rounded">
               <div class="carousel-item active">
                 <img src="https://placehold.co/600x400?text=Slide+1" class="d-block w-100" alt="Slide 1">
@@ -285,7 +339,7 @@ function addLayoutToCanvas(columns = 1, target = dropCanvas) {
 
       case "ad image":
         editableContent = `
-          <div style="max-width: 600px;">
+          <div style="max-width: auto;">
             <img src="https://placehold.co/600x400" class="img-fluid rounded" alt="Ad Image" />
           </div>`;
         break;
@@ -315,10 +369,67 @@ function addLayoutToCanvas(columns = 1, target = dropCanvas) {
     }
 
     contentWrapper.innerHTML = editableContent;
+    
+    element.style.position = 'relative'; // Ensure this is set
 
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = "position-absolute top-0 end-0 d-flex gap-1 m-2";
+
+    
+    // Delete Button
+    const deleteBtn = document.createElement('button');
+deleteBtn.className = "btn btn-sm btn-outline-danger";
+deleteBtn.innerHTML = `<i data-lucide="trash-2"></i>`;
+
+deleteBtn.addEventListener('click', () => {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete it!',
+    cancelButtonText: 'Cancel',
+    customClass: {
+      confirmButton: 'btn btn-danger w-xs me-2',
+      cancelButton: 'btn btn-light w-xs',
+    },
+    buttonsStyling: false
+  }).then((result) => {
+    if (result.isConfirmed) {
+      element.remove();
+      Swal.fire({
+        title: 'Deleted!',
+        text: 'The component has been removed.',
+        icon: 'success',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    }
+  });
+});
+
+lucide.createIcons();
+
+    
     const editBtn = document.createElement('button');
-    editBtn.className = "btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 d-flex align-items-center hide-edit-button";
-    editBtn.innerHTML = `<i data-lucide="pencil"></i>`;
+    editBtn.className = "btn btn-sm btn-outline-primary";
+    editBtn.innerHTML = `<i data-lucide="edit-3"></i>`;
+    
+    const moveUpBtn = document.createElement('button');
+    moveUpBtn.textContent = '⬆️';
+    moveUpBtn.className = 'btn btn-sm btn-outline-secondary m-2';
+    moveUpBtn.addEventListener('click', () => {
+        moveComponent(element, 'up');
+    });
+    // Move Down Button
+    const moveDownBtn = document.createElement('button');
+    moveDownBtn.textContent = '⬇️';
+    moveDownBtn.className = 'btn btn-sm btn-outline-secondary m-2';
+    moveDownBtn.addEventListener('click', () => {
+        moveComponent(element, 'down');
+    });
+    
+    
 
 
 editBtn.addEventListener('click', () => {
@@ -489,7 +600,7 @@ quill.root.innerHTML = html;
     }
 
     currentEditTarget.innerHTML = `
-      <div id="carousel-edit" class="carousel slide" data-bs-ride="carousel" style="max-width: 600px;">
+      <div id="carousel-edit" class="carousel slide" data-bs-ride="carousel" style="max-width: auto;">
         <div class="carousel-inner rounded">${slidesHTML}</div>
         <button class="carousel-control-prev" type="button" data-bs-target="#carousel-edit" data-bs-slide="prev">
           <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -546,13 +657,16 @@ quill.root.innerHTML = html;
         lucide.createIcons();
       };
     });
-
     element.appendChild(contentWrapper);
-    element.appendChild(editBtn);
-        lucide.createIcons();
-    // dropCanvas.appendChild(element);
+    buttonContainer.appendChild(editBtn);
+    element.appendChild(moveUpBtn);
+    element.appendChild(moveDownBtn);
+    buttonContainer.appendChild(deleteBtn);
+    element.appendChild(buttonContainer); 
       targetContainer.appendChild(element);
+       lucide.createIcons()
       dropTarget.classList.add('has-component');
+requestAnimationFrame(() => lucide.createIcons(element));
 
   }
 let currentVideoQuery = '';
@@ -835,3 +949,6 @@ async function generateGridHTML(cols, rows, playlistURL = '', videoCount = 12) {
 
 
 </script>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
