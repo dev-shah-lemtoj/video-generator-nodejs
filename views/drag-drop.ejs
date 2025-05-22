@@ -177,28 +177,30 @@ function previewCanvas() {
   components.forEach(el => {
     el.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', e.target.dataset.type);
+      e.dataTransfer.setData('source', 'toolbar'); 
     });
   });
 
 function handleDrop(e) {
-  e.preventDefault();
-
-  const layoutType = e.dataTransfer.getData('layout');
-  const type = e.dataTransfer.getData('text/plain');
-  const dropTarget = e.target.closest('.layout-column');
-
-  if (layoutType) {
-    addLayoutToCanvas(parseInt(layoutType), dropTarget || dropCanvas);
-    return;
-  }
-
-  if (type) {
-  if (!dropTarget) {
-    showCanvasAlert('Please add a layout before dropping a component.');
-    return;
-  }
-  // addComponentToCanvas(type, dropTarget);
-}
+    e.preventDefault();
+    const layoutType = e.dataTransfer.getData('layout');
+    const type = e.dataTransfer.getData('text/plain');
+    const dropTarget = e.target.closest('.layout-column');
+    // If a layout type is being dropped, add a new layout
+    if (layoutType) {
+        addLayoutToCanvas(parseInt(layoutType), dropCanvas);
+        return;
+    }
+    // If a component type is being dropped
+    if (type) {
+        // Check if the drop target is a valid component area
+        if (!dropTarget) {
+            showCanvasAlert('Please add a layout before dropping a component.');
+            return;
+        }
+        // If the drop target is a valid component area, add the component
+        // addComponentToCanvas(type, dropTarget);
+    }
 }
 
 function moveComponent(component, direction) {
@@ -212,41 +214,38 @@ function moveComponent(component, direction) {
 
 
 function addLayoutToCanvas(columns = 1, target = dropCanvas) {
-  const row = document.createElement('div');
-  row.className = 'row g-2 mb-3 position-relative'; // Add position-relative class
-
-  for (let i = 0; i < columns; i++) {
-    const col = document.createElement('div');
-    col.className = `col layout-column border rounded p-3 bg-white`;
-    col.style.minHeight = '100px';
-
-    // Add drop placeholder (initially hidden)
-    col.innerHTML = `
-      <div class="drop-placeholder text-center text-muted py-5" style="border: 2px dashed #ccc; display: none;">
-        <i data-lucide="plus-circle" class="mb-2"></i><br/>
-        Drop here
-      </div>
-    `;
-
-    // Add drag and drop handlers
-    col.addEventListener('dragover', e => e.preventDefault());
-    col.addEventListener('dragenter', () => {
-      col.querySelector('.drop-placeholder').style.display = 'block';
-    });
-    col.addEventListener('dragleave', () => {
-      col.querySelector('.drop-placeholder').style.display = 'none';
-    });
-    col.addEventListener('drop', e => {
-      e.preventDefault();
-      col.querySelector('.drop-placeholder').style.display = 'none';
-      const type = e.dataTransfer.getData('text/plain');
-      if (type) {
-        addComponentToCanvas(type, col);
-      }
-    });
-
-    row.appendChild(col);
-  }
+    const row = document.createElement('div');
+    row.className = 'row g-2 mb-3 position-relative';
+    for (let i = 0; i < columns; i++) {
+        const col = document.createElement('div');
+        col.className = 'col layout-column border rounded p-3 bg-white';
+        col.style.minHeight = '100px';
+        col.innerHTML = `
+            <div class="drop-placeholder text-center text-muted py-5" style="border: 2px dashed #ccc; display: none;">
+                <i data-lucide="plus-circle" class="mb-2"></i><br/>
+                Drop here
+            </div>
+        `;
+        // Drop handlers
+        col.addEventListener('dragover', e => e.preventDefault());
+        col.addEventListener('dragenter', () => {
+            col.querySelector('.drop-placeholder').style.display = 'block';
+        });
+        col.addEventListener('dragleave', () => {
+            col.querySelector('.drop-placeholder').style.display = 'none';
+        });
+        col.addEventListener('drop', e => {
+            e.preventDefault();
+            col.querySelector('.drop-placeholder').style.display = 'none';
+            // ✅ Only accept drops from toolbar
+            const type = e.dataTransfer.getData('text/plain');
+            const source = e.dataTransfer.getData('source');
+            if (source === 'toolbar' && type) {
+                addComponentToCanvas(type, col);
+            }
+        });
+        row.appendChild(col);
+    }
 
   // Create a smaller delete button for the entire layout
   const deleteBtn = document.createElement('button');
@@ -968,7 +967,6 @@ async function generateGridHTML(cols, rows, playlistURL = '', videoCount = 12) {
   }
   return html;
 }
-
 
 
 </script>
