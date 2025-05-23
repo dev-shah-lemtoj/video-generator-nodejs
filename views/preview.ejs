@@ -22,10 +22,9 @@
         const canvasContent = localStorage.getItem('canvasContent');
         document.getElementById('canvasPreview').innerHTML = canvasContent || '<p>No content available.</p>';
 
-        document.querySelectorAll('.hide-edit-button').forEach(btn => {
+        document.querySelectorAll('.hide-edit-button, .btn-outline-danger, .btn-outline-primary, .btn-outline-info, .btn-danger').forEach(btn => {
         // btn.style.display = 'none'; // Hide the edit buttons
         // Alternatively, you can remove them completely:
         btn.remove();
     });
     </script>
-

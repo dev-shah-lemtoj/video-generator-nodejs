@@ -89,11 +89,13 @@
   </div>
 
   <!-- Canvas area -->
-<div class="text-center mt-4">
+
+<div class="flex-grow-1 p-4">
+<div class="d-flex justify-content-end mb-3">
   <button class="btn btn-success" onclick="previewCanvas()">Preview</button>
 </div>
-  <div class="flex-grow-1 p-4">
-    <h5 class="text-center mb-3">Drag components here</h5>
+
+    <!--<h5 class="text-center mb-3">Drag components here</h5>-->
     <div 
       id="drop-canvas"
       class="border border-dashed p-5 text-center bg-light"
@@ -119,10 +121,86 @@
     </div>
   </div>
 </div>
+<!-- Settings Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">Component Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="settingsContentArea">
+                <div class="mb-3">
+                    <label for="marginInput" class="form-label">Margin</label>
+                    <input type="text" id="marginInput" class="form-control" placeholder="e.g., 10px">
+                </div>
+                <div class="mb-3">
+                    <label for="paddingInput" class="form-label">Padding</label>
+                    <input type="text" id="paddingInput" class="form-control" placeholder="e.g., 10px">
+                </div>
+                <div class="mb-3">
+                    <label for="customClassInput" class="form-label">Custom Class</label>
+                    <input type="text" id="customClassInput" class="form-control" placeholder="e.g., my-custom-class">
+                </div>
+                <div class="mb-3">
+                    <label for="customIdInput" class="form-label">Custom ID</label>
+                    <input type="text" id="customIdInput" class="form-control" placeholder="e.g., my-custom-id">
+                </div>
+            </div>
+            <div class="modal-footer settings-modal-footer"> <!-- New class added here -->
+                <button type="button" class="btn btn-primary" id="saveSettingsBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <%- contentFor('FooterJs') %>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
+function openSettingsModal(contentWrapper) {
+    const marginInput = document.getElementById('marginInput');
+    const paddingInput = document.getElementById('paddingInput');
+    const customClassInput = document.getElementById('customClassInput');
+    const customIdInput = document.getElementById('customIdInput');
+
+    // Get current styles
+    const currentMargin = window.getComputedStyle(contentWrapper).margin;
+    const currentPadding = window.getComputedStyle(contentWrapper).padding;
+    const currentClass = contentWrapper.className;
+    const currentId = contentWrapper.id;
+
+    // Set the values in the modal inputs
+    marginInput.value = currentMargin;
+    paddingInput.value = currentPadding;
+    customClassInput.value = currentClass.includes(' ') ? currentClass.split(' ').pop() : ''; // Get the last class
+    customIdInput.value = currentId || ''; // Get the current ID
+
+    // Show the modal
+    const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
+    settingsModal.show();
+
+    // Save settings on button click
+    document.getElementById('saveSettingsBtn').onclick = () => {
+        const newMargin = marginInput.value;
+        const newPadding = paddingInput.value;
+        const newClass = customClassInput.value;
+        const newId = customIdInput.value;
+
+        // Apply the new styles
+        contentWrapper.style.margin = newMargin;
+        contentWrapper.style.padding = newPadding;
+
+        // Remove existing custom classes and add the new one
+        contentWrapper.className = contentWrapper.className.split(' ').filter(c => !c.startsWith('custom-class')).join(' ') + ' ' + newClass;
+
+        // Set the new ID
+        contentWrapper.id = newId;
+
+        // Hide the modal
+        settingsModal.hide();
+    };
+}
+
  // Add drag-and-drop functionality for reordering components
   
 function previewCanvas() {
@@ -212,6 +290,50 @@ function moveComponent(component, direction) {
     }
 }
 
+function openLayoutSettingsModal(layoutElement) {
+    const marginInput = document.getElementById('marginInput');
+    const paddingInput = document.getElementById('paddingInput');
+    const customClassInput = document.getElementById('customClassInput');
+    const customIdInput = document.getElementById('customIdInput');
+
+    // Get current styles
+    const currentMargin = window.getComputedStyle(layoutElement).margin;
+    const currentPadding = window.getComputedStyle(layoutElement).padding;
+    const currentClass = layoutElement.className;
+    const currentId = layoutElement.id;
+
+    // Set the values in the modal inputs
+    marginInput.value = currentMargin;
+    paddingInput.value = currentPadding;
+    customClassInput.value = currentClass.includes(' ') ? currentClass.split(' ').pop() : ''; // Get the last class
+    customIdInput.value = currentId || ''; // Get the current ID
+
+    // Show the modal
+    const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
+    settingsModal.show();
+
+    // Save settings on button click
+    document.getElementById('saveSettingsBtn').onclick = () => {
+        const newMargin = marginInput.value;
+        const newPadding = paddingInput.value;
+        const newClass = customClassInput.value;
+        const newId = customIdInput.value;
+
+        // Apply the new styles
+        layoutElement.style.margin = newMargin;
+        layoutElement.style.padding = newPadding;
+
+        // Remove existing custom classes and add the new one
+        layoutElement.className = layoutElement.className.split(' ').filter(c => !c.startsWith('custom-class')).join(' ') + ' ' + newClass;
+
+        // Set the new ID
+        layoutElement.id = newId;
+
+        // Hide the modal
+        settingsModal.hide();
+    };
+}
+
 
 function addLayoutToCanvas(columns = 1, target = dropCanvas) {
     const row = document.createElement('div');
@@ -288,9 +410,30 @@ function addLayoutToCanvas(columns = 1, target = dropCanvas) {
       }
     });
   };
+  
+  const settingsBtn = document.createElement('button');
+    settingsBtn.className = 'btn btn-info btn-sm p-1'; // Smaller button with padding
+    settingsBtn.innerHTML = `<i data-lucide="settings" style="font-size: 1rem;"></i>`; // Icon size
+    settingsBtn.style.position = 'absolute';
+    settingsBtn.style.top = '50px'; // Adjust as needed to position below the delete button
+    settingsBtn.style.right = '10px';
+    settingsBtn.style.zIndex = '10'; // Ensure it appears above other elements
+    settingsBtn.style.borderRadius = '50%'; // Make it circular
+    settingsBtn.style.width = '30px'; // Set width
+    settingsBtn.style.height = '30px'; // Set height
+    settingsBtn.style.display = 'flex'; // Center the icon
+    settingsBtn.style.alignItems = 'center'; // Center the icon vertically
+    settingsBtn.style.justifyContent = 'center'; // Center the icon horizontally
+    
+    
+    // Append the settings button to the row
+    settingsBtn.addEventListener('click', () => {
+        openLayoutSettingsModal(row); // Pass the layout row element
+    });
 
   // Append the delete button to the row
   row.appendChild(deleteBtn);
+  row.appendChild(settingsBtn);
   target.appendChild(row);
   lucide.createIcons();
 }
@@ -441,6 +584,14 @@ lucide.createIcons();
     moveDownBtn.className = 'btn btn-sm btn-outline-secondary m-2';
     moveDownBtn.addEventListener('click', () => {
         moveComponent(element, 'down');
+    });
+    
+    
+    const settingsBtn = document.createElement('button');
+    settingsBtn.className = "btn btn-sm btn-outline-info";
+    settingsBtn.innerHTML = `<i data-lucide="settings"></i>`;
+    settingsBtn.addEventListener('click', () => {
+        openSettingsModal(contentWrapper);
     });
     
     
@@ -673,9 +824,8 @@ quill.root.innerHTML = html;
     });
     element.appendChild(contentWrapper);
     buttonContainer.appendChild(editBtn);
-    element.appendChild(moveUpBtn);
-    element.appendChild(moveDownBtn);
     buttonContainer.appendChild(deleteBtn);
+    buttonContainer.appendChild(settingsBtn);
     element.appendChild(buttonContainer); 
       targetContainer.appendChild(element);
        Sortable.create(targetContainer, {
@@ -967,6 +1117,9 @@ async function generateGridHTML(cols, rows, playlistURL = '', videoCount = 12) {
   }
   return html;
 }
+
+
+
 
 
 </script>
