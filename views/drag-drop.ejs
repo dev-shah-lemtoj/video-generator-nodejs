@@ -153,7 +153,6 @@
         </div>
     </div>
 </div>
-
 <%- contentFor('FooterJs') %>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
@@ -836,7 +835,6 @@ quill.root.innerHTML = html;
         }
     });
        lucide.createIcons()
-      dropTarget.classList.add('has-component');
 requestAnimationFrame(() => lucide.createIcons(element));
 
   }
@@ -856,33 +854,19 @@ function extractPlaylistId(url) {
   }
 }
 
-async function generateGridByCategory(cols, rows, query, videoCount) {
-  currentVideoQuery = query;
-  currentCols = cols;
-  currentVideoCount = (cols * rows)*6;
-  currentVideoSourceType = 'category';
 
-  const { videos, nextPageToken: token } = await fetchVideosByCategory(query, currentVideoCount);
-  nextPageToken = token;
+let videoBuffer = [];        // store all videos fetched so far for current page
+let bufferIndex = 0;         // how many videos shown from videoBuffer
+let currentPage = 1;         // API page number
+const pageSize = 12;         // fetch 56 videos per API call
+const chunkSize = 12;        // show 12 videos per Load More click
 
-  let html = renderVideosGrid(videos, cols, rows, currentVideoCount);
-  if (token) {
-    html += `<div class="text-center mt-3"><button id="loadMoreBtn" class="btn btn-primary">Load More</button></div>`;
-  }
+let hasMore = true;
+let totalVideos = 0;
 
-  setTimeout(() => {
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
-    if (loadMoreBtn) {
-      loadMoreBtn.addEventListener('click', loadMoreVideos);
-    }
-  }, 100);
 
-  return html;
-}
-
-async function fetchVideosByCategory(query, maxResults = 72, page = 1) {
-  const url = `https://api.jwplayer.com/v2/sites/rxoMwaA5/thumbnails/?page=${page}&page_length=${maxResults}&sort=created%3Adsc`;
-
+async function fetchVideosByCategory(page = 1) {
+  const url = `https://api.jwplayer.com/v2/sites/rxoMwaA5/media/?page=${page}&page_length=${pageSize}&sort=created%3Adsc`;
   const res = await fetch(url, {
     headers: {
       'Accept': 'application/json',
@@ -892,27 +876,63 @@ async function fetchVideosByCategory(query, maxResults = 72, page = 1) {
 
   const data = await res.json();
 
-  // Grouping like in PHP
-  const grouped = {};
-  for (const item of data.thumbnails) {
-    const mediaId = item.relationships?.media?.[0]?.id;
-    const type = item.file_type;
-    const url = item.delivery_url;
+  const totalVideos = data.total || 0;
+  console.log(totalVideos);
+  const hasMore = (data.page * data.page_length) < totalVideos;
+  console.log(hasMore)
 
-    if (!mediaId) continue;
-    if (!grouped[mediaId]) grouped[mediaId] = { mediaId };
-    grouped[mediaId][type] = url;
-  }
+  const videos = await Promise.all(
+    data.media.map(async (item) => {
+      const mediaId = item.id;
+      const mediaRes = await fetch(`https://cdn.jwplayer.com/v2/media/${mediaId}`);
+      const mediaData = await mediaRes.json();
+      return {
+        mediaId,
+        title: mediaData.title,
+        image: `https://cdn.jwplayer.com/v2/media/${mediaId}/poster.jpg?width=320`,
+        videoUrl: mediaData.playlist?.[0]?.sources?.find(s => s.type === "video/mp4")?.file || ''
+      };
+    })
+  );
 
-  const videos = Object.values(grouped);
-  const hasMore = data.page < data.total_pages;
-
-  return {
-    videos,
-    nextPageToken: hasMore ? page + 1 : null
-  };
+  return { videos, totalVideos, hasMore };
 }
 
+async function generateGridByCategory(cols, rows, query) {
+  // Reset state on new query
+  videoBuffer = [];
+  bufferIndex = 0;
+  currentPage = 1;
+  totalVideos = 0;
+  totalPages = 0;
+  hasMore = false;
+
+  const { videos, totalVideos: total, hasMore: more } = await fetchVideosByCategory(currentPage);
+  totalVideos = total;
+  hasMore = more;
+  totalPages = Math.ceil(totalVideos / pageSize);
+  videoBuffer = videos;
+
+  if (!videoBuffer || videoBuffer.length === 0) return '<div>No videos found.</div>';
+
+  const initialVideos = videoBuffer.slice(bufferIndex, bufferIndex + chunkSize);
+  bufferIndex += chunkSize;
+
+  let html = renderVideosGrid(initialVideos, cols, Math.ceil(chunkSize / cols), chunkSize);
+
+  if (hasMore) {
+    html += `<div class="text-center mt-3"><button id="loadMoreBtn" class="btn btn-primary">Load More</button></div>`;
+  }
+
+  setTimeout(() => {
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', loadMoreVideos.bind(null, cols));
+    }
+  }, 100);
+
+  return html;
+}
 
 
 
@@ -928,10 +948,12 @@ function renderVideosGrid(videos, cols, rows, videoCount, wrap = true) {
         <div class="col">
           <div class="card h-100">
             <video controls class="card-img-top" preload="metadata">
-  <source src="${video.mp4}" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
+              <source src="${video.videoUrl}" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <div class="card-body">
+              <h5 class="card-title">${video.title}</h5>
+            </div>
           </div>
         </div>`;
     }
@@ -942,33 +964,57 @@ function renderVideosGrid(videos, cols, rows, videoCount, wrap = true) {
   return html;
 }
 
-function playJWVideo(containerId, fileUrl, imageUrl) {
-  // You can either reuse the same div or dynamically create a modal/player container
-  jwplayer(containerId).setup({
-    file: fileUrl,
-    image: imageUrl,
-    title: 'Sample Video'
-  });
-}
 
+async function loadMoreVideos(cols) {
+  const container = document.querySelector('.video-grid-container');
 
+  // Show next chunk from buffer if available
+  if (bufferIndex < videoBuffer.length) {
+    const nextVideos = videoBuffer.slice(bufferIndex, bufferIndex + chunkSize);
+    bufferIndex += chunkSize;
 
-
-async function loadMoreVideos() {
-  if (!nextPageToken || currentVideoSourceType !== 'category') return;
-
-  const container = currentEditTarget.querySelector('.video-grid-container');
-  const { videos, nextPageToken: newToken } = await fetchVideosByCategory(currentVideoQuery, currentCols * 2, nextPageToken);
-  nextPageToken = newToken;
-
-  const html = renderVideosGrid(videos, currentCols, Math.ceil(videos.length / currentCols), videos.length, false);
-  container.insertAdjacentHTML('beforeend', html);
-
-  if (!newToken) {
-    document.getElementById('loadMoreBtn').remove();
+    const html = renderVideosGrid(nextVideos, cols, Math.ceil(chunkSize / cols), chunkSize, false);
+    container.insertAdjacentHTML('beforeend', html);
   }
 
+  // If buffer exhausted AND there may be more to fetch
+  if (bufferIndex >= videoBuffer.length && hasMore) {
+    currentPage += 1;
+
+    const { videos: newVideos, hasMore: more } = await fetchVideosByCategory(currentPage);
+
+    if (newVideos.length === 0) {
+      const loadMoreBtn = document.getElementById('loadMoreBtn');
+      if (loadMoreBtn) loadMoreBtn.remove();
+      return;
+    }
+
+    // Append to buffer, do NOT reset
+    videoBuffer = videoBuffer.concat(newVideos);
+    hasMore = more;
+
+    // Show next chunk from newly added videos
+    const nextVideos = videoBuffer.slice(bufferIndex, bufferIndex + chunkSize);
+    bufferIndex += chunkSize;
+
+    const html = renderVideosGrid(nextVideos, cols, Math.ceil(chunkSize / cols), chunkSize, false);
+    container.insertAdjacentHTML('beforeend', html);
+
+    container.insertAdjacentHTML('beforeend', `<div class="pagination text-center mt-3">Page ${currentPage}</div>`);
+
+    if (!hasMore) {
+      const loadMoreBtn = document.getElementById('loadMoreBtn');
+      if (loadMoreBtn) loadMoreBtn.remove();
+    }
+  }
 }
+
+
+
+
+
+
+
 
 let playlistVideos = [];
 let playlistNextPageToken = '';
