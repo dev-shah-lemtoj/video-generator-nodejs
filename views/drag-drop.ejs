@@ -614,36 +614,38 @@ editBtn.addEventListener('click', () => {
       <div id="imageInputsContainer" class="d-flex flex-column gap-2"></div>
     `;
 
-    function renderVideoInputs(count) {
-      const container = document.getElementById("imageInputsContainer");
-      container.innerHTML = "";
+    function renderVideosGrid(videos, cols, rows, videoCount, wrap = true) {
+  let html = wrap ? `<div class="video-grid-container">` : '';
+  let index = 0;
 
-      for (let i = 0; i < count; i++) {
-        let videoSrc = "https://www.w3schools.com/html/mov_bbb.mp4"; // Default fallback
-        const slideVideo = currentEditTarget.querySelectorAll('.carousel-item video')[i];
-        if (slideVideo && slideVideo.src) videoSrc = slideVideo.src;
-
-        container.innerHTML += `
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <label>Slide ${i + 1}:</label>
-            <input type="file" accept="video/*" class="form-control slide-video-input" data-index="${i}">
-            <video src="${videoSrc}" class="video-preview border rounded" width="150" controls autoplay muted loop></video>
-          </div>`;
-      }
-
-      document.querySelectorAll(".slide-video-input").forEach(input => {
-        input.addEventListener("change", e => {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function (event) {
-              input.nextElementSibling.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-          }
-        });
-      });
+  for (let r = 0; r < rows; r++) {
+    html += `<div class="row mb-3">`;
+    for (let c = 0; c < cols && index < videos.length; c++, index++) {
+      const video = videos[index];
+      html += `
+        <div class="col">
+          <div class="card h-100">
+            ${video.videoUrl
+              ? `<video controls class="card-img-top" preload="metadata">
+                   <source src="${video.videoUrl}" type="video/mp4">
+                   Your browser does not support the video tag.
+                 </video>`
+              : `<div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 180px;">
+                   <span class="text-muted">No video found</span>
+                 </div>`}
+            <div class="card-body">
+              <h5 class="card-title">${video.title}</h5>
+            </div>
+          </div>
+        </div>`;
     }
+    html += `</div>`;
+  }
+
+  if (wrap) html += `</div>`;
+  return html;
+}
+
 
     const initialCount = isSlider.querySelectorAll('.carousel-item').length || 2;
     document.getElementById("slideCountInput").value = initialCount;
@@ -888,7 +890,7 @@ async function fetchVideosByCategory(page = 1) {
       const mediaData = await mediaRes.json();
       return {
         mediaId,
-        title: mediaData.title,
+        title: mediaData.title || 'Video not rendered',
         image: `https://cdn.jwplayer.com/v2/media/${mediaId}/poster.jpg?width=320`,
         videoUrl: mediaData.playlist?.[0]?.sources?.find(s => s.type === "video/mp4")?.file || ''
       };
@@ -947,10 +949,15 @@ function renderVideosGrid(videos, cols, rows, videoCount, wrap = true) {
       html += `
         <div class="col">
           <div class="card h-100">
-            <video controls class="card-img-top" preload="metadata">
-              <source src="${video.videoUrl}" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>
+            ${video.videoUrl
+              ? `<video controls class="card-img-top" preload="metadata">
+                   <source src="${video.videoUrl}" type="video/mp4">
+                   Your browser does not support the video tag.
+                 </video>`
+              : `<div class="card-img-top d-flex align-items-center justify-content-center" style="height: 180px; background-color: #f0f0f0;">
+                   <span class="text-muted">No video found</span>
+                 </div>`
+            }
             <div class="card-body">
               <h5 class="card-title">${video.title}</h5>
             </div>
@@ -963,6 +970,7 @@ function renderVideosGrid(videos, cols, rows, videoCount, wrap = true) {
   if (wrap) html += `</div>`;
   return html;
 }
+
 
 
 async function loadMoreVideos(cols) {
