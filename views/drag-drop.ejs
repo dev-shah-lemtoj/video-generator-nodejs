@@ -161,7 +161,7 @@ async function saveLayout() {
   const layout = document.getElementById('drop-canvas').innerHTML;
 
   try {
-    const response = await fetch('http://localhost:5000/api/save-layout', {
+    const response = await fetch('http://103.154.233.39:5000/api/save-layout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -801,6 +801,13 @@ module.exports = function (route) {
         folder: 'Pages'
         });
     })
+    route.get('/site-list', (req, res) => {
+    res.render('site-list',{ // Render the preview.ejs file
+        title: 'Site List',
+        page_title: 'Site List',
+        folder: 'Pages'
+        });
+    })
     route.get('/drag-drop', (req, res) => {
         const icons = {
     slider: "sliders",
