@@ -92,7 +92,8 @@
 
 <div class="flex-grow-1 p-4">
 <div class="d-flex justify-content-end mb-3">
-  <button class="btn btn-success" onclick="previewCanvas()">Preview</button>
+  <button class="btn btn-success me-2" onclick="previewCanvas()">Preview</button>
+  <button class="btn btn-primary" onclick="saveLayout()">Save Layout</button>
 </div>
 
     <!--<h5 class="text-center mb-3">Drag components here</h5>-->
@@ -156,6 +157,37 @@
 <%- contentFor('FooterJs') %>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
+async function saveLayout() {
+  const layout = document.getElementById('drop-canvas').innerHTML;
+
+  try {
+    const response = await fetch('http://localhost:5000/api/save-layout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ layout }),  // ✅ Directly stringify here
+    });
+
+    if (response.ok) {
+      const contentType = response.headers.get("Content-Type") || "";
+      if (contentType.includes("application/json")) {
+        const result = await response.json();
+        showCanvasAlert('Layout saved successfully!');
+      } else {
+        const text = await response.text();
+        console.log('Non-JSON response:', text);
+        showCanvasAlert('Layout saved successfully (non-JSON response).');
+      }
+    } else {
+      showCanvasAlert(`Error ${response.status}: ${response.statusText}`);
+    }
+  } catch (err) {
+    console.error('Save layout error:', err);
+    showCanvasAlert('Failed to save layout. See console.');
+  }
+}
+
 function openSettingsModal(contentWrapper) {
     const marginInput = document.getElementById('marginInput');
     const paddingInput = document.getElementById('paddingInput');
